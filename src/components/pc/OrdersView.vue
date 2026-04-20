@@ -33,6 +33,31 @@
             size="default"
             class="search-input"
           />
+          <el-select
+            v-model="state.getInfoParams.categoryaid"
+            placeholder="筛选一级品类"
+            @change="getCategorybs(state.getInfoParams.categoryaid)"
+            style="width: 180px; height: 32px; margin-left: 25px"
+          >
+            <el-option
+              v-for="item in state.categories_a"
+              :key="item.id"
+              :label="item.title"
+              :value="item.id"
+            />
+          </el-select>
+          <el-select
+            v-model="state.getInfoParams.status"
+            placeholder="筛选订单状态"
+            style="width: 180px; height: 32px; margin-left: 25px"
+          >
+            <el-option
+              v-for="item in state.statusOptions"
+              :key="item.id"
+              :label="item.title"
+              :value="item.id"
+            />
+          </el-select>
           <el-button type="primary" @click="getOrders" class="search-btn">
             <el-icon><Search /></el-icon>
             点击查询
@@ -199,6 +224,13 @@
                   class="read-only-input"
                 />
               </el-form-item>
+              <el-form-item label="信用编码">
+                <el-input
+                  v-model="state.orderInfoForm.creditcode"
+                  readonly
+                  class="read-only-input"
+                />
+              </el-form-item>
             </div>
           </div>
 
@@ -261,6 +293,7 @@
                   v-model="state.orderInfoForm.contractprice"
                   :readonly="state.orderInfoForm.status !== 1"
                   class="read-only-input"
+                  @input="handleContractPriceChange"
                 >
                   <template #prefix>¥</template>
                 </el-input>
@@ -338,10 +371,37 @@
                   <el-form-item
                     label="套餐说明"
                     v-if="item.pricetype === '套餐计价'"
-                    style="width: 600px"
                   >
                     <el-input
                       v-model="item.packagetitle"
+                      readonly
+                      class="read-only-input"
+                    />
+                  </el-form-item>
+                  <el-form-item label="建筑面积" v-if="item.buildarea">
+                    <el-input
+                      v-model="item.buildarea"
+                      readonly
+                      class="read-only-input"
+                    />
+                  </el-form-item>
+                  <el-form-item label="居室信息" v-if="item.js">
+                    <el-input
+                      v-model="item.js"
+                      readonly
+                      class="read-only-input"
+                    />
+                  </el-form-item>
+                  <el-form-item label="起租日期" v-if="item.starttanent">
+                    <el-input
+                      :value="timestamp2date(item.starttanent)"
+                      readonly
+                      class="read-only-input"
+                    />
+                  </el-form-item>
+                  <el-form-item label="退租日期" v-if="item.endtanent">
+                    <el-input
+                      :value="timestamp2date(item.endtanent)"
                       readonly
                       class="read-only-input"
                     />
@@ -369,6 +429,83 @@
                     </div>
                   </el-form-item>
                 </div>
+              </div>
+            </div>
+
+            <!-- 订单支付计划 -->
+            <div
+              class="order-pay-plan"
+              v-if="
+                state.paymentPlan && Object.keys(state.paymentPlan).length > 0
+              "
+            >
+              <div class="section-subheader">
+                <el-icon><InfoFilled /></el-icon>
+                <h4>支付计划</h4>
+              </div>
+              <div class="form-grid">
+                <el-form-item label="订单总额">
+                  <el-input
+                    :value="state.paymentPlan.totalprice"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
+                <el-form-item label="补贴方式">
+                  <el-input
+                    :value="
+                      state.paymentPlan.subsidytype === 'discount'
+                        ? '折扣比例'
+                        : '限额补贴'
+                    "
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
+                <el-form-item
+                  label="积分补贴"
+                  v-if="state.paymentPlan.subsidytype === 'deduction'"
+                >
+                  <el-input
+                    :value="state.paymentPlan.face_value"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
+                <el-form-item
+                  label="折扣比例"
+                  v-if="state.paymentPlan.subsidytype === 'discount'"
+                >
+                  <el-input
+                    :value="state.paymentPlan.face_value"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
+                <el-form-item
+                  label="折扣限额"
+                  v-if="state.paymentPlan.subsidytype === 'discount'"
+                >
+                  <el-input
+                    :value="state.paymentPlan.limitamount"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
+                <el-form-item label="平台补贴">
+                  <el-input
+                    :value="state.paymentPlan.totalSubsidyAmount"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
+                <el-form-item label="租户自付">
+                  <el-input
+                    :value="state.paymentPlan.userPayAmount"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
               </div>
             </div>
           </div>
@@ -436,8 +573,8 @@
               <h3>文件列表</h3>
             </div>
             <div class="form-grid">
-              <!-- 合同扫描件 -->
-              <el-form-item label="合同扫描件" class="file-form-item">
+              <!-- 需求说明文件 -->
+              <el-form-item label="需求说明文件" class="file-form-item">
                 <div class="file-upload-wrapper">
                   <el-upload
                     :action="store.state.uploadApi"
@@ -451,7 +588,7 @@
                   >
                     <el-button type="primary" size="default">
                       <el-icon><Upload /></el-icon>
-                      上传合同扫描件
+                      上传需求说明文件
                     </el-button>
                   </el-upload>
                   <div
@@ -465,7 +602,7 @@
                       class="file-link-btn"
                     >
                       <el-icon><Download /></el-icon>
-                      下载合同扫描件
+                      下载需求说明文件
                     </el-button>
                   </div>
                   <div v-else class="no-file-tip">
@@ -639,6 +776,7 @@ import {
   // Stop,
 } from "@element-plus/icons-vue";
 import { download } from "../../utils/request";
+import { info } from "sass";
 
 const state = reactive({
   fileTempList: [],
@@ -653,12 +791,16 @@ const state = reactive({
     bcompanyname: "",
     ccompanyname: "",
     cusername: "",
+    categoryaid: "",
+    categorybid: "",
+    status: "",
   },
   dialogViewPicVisible: false,
   curDialogImageUrl: "",
   orderInfoForm: {
     id: "",
     contractid: "",
+    categoryaid: "",
     bcompanyid: "",
     bcompanyname: "",
     ccompanyid: "",
@@ -678,7 +820,9 @@ const state = reactive({
     updatetime: "",
     cusertitle: "",
     cuserphone: "",
+    creditcode: "",
   },
+  paymentPlan: {},
   uploadContractFileForm: {
     fileid: "110",
     orderid: "",
@@ -714,7 +858,49 @@ const state = reactive({
   contractFileList: [],
   // 结项文件上传列表
   finishFileList: [],
+
+  categories_a: [],
+  categories_b: [],
+  searchCategorybs: [],
+  statusOptions: [
+    { id: 0, title: "待主管审核" },
+    { id: 1, title: "待签约" },
+    { id: 2, title: "服务中" },
+    { id: 3, title: "已结项" },
+    { id: 4, title: "待后台签约" },
+    { id: -1, title: "用户取消订单" },
+    { id: -2, title: "审核未通过" },
+    { id: -3, title: "后台终止" },
+    { id: -4, title: "主管审核拒绝" },
+  ],
 });
+
+const getCategories = () => {
+  // 访问接口给两个category赋值
+  let payload = {};
+  request.post("/getcategories", payload).then((res) => {
+    if (res) {
+      state.categories_a = res.data.arr_category_a;
+      state.categories_b = res.data.arr_category_b;
+    } else {
+      ElMessage.error("更新失败！");
+    }
+  });
+};
+
+const getCategorybs = (categoryaid) => {
+  let payload = {
+    categoryaid: categoryaid,
+  };
+  request.post("/getbcategoriesbyaid", payload).then((res) => {
+    if (res && res.retcode === "200" && res.data) {
+      state.searchCategorybs = res.data.arr_category_b;
+      state.getInfoParams.categorybid = "";
+    } else {
+      ElMessage.error("获取二级分类列表失败！");
+    }
+  });
+};
 
 // 空表格提示文本
 const emptyTableText = computed(() => {
@@ -763,7 +949,6 @@ const getSupplierInfo = (bcompanyid) => {
   };
   request.post("/getbcompanyuserinfobyid", payload).then((res) => {
     if (res && res.retcode === "200" && res.data) {
-      console.info("res", res);
       state.supplierInfo.bcompanycpname = res.data[0].bcompanycpname || "";
       state.supplierInfo.bcompanycpphone = res.data[0].bcompanycpphone || "";
       state.supplierInfo.bcompanycpmail = res.data[0].bcompanycpmail || "";
@@ -873,9 +1058,6 @@ const downloadFileOuter = (fileList) => {
   let fileName = fileList[0].name;
   let uuidName = fileList[0].url;
 
-  console.info("fileName", fileName);
-  console.info("uuidName", uuidName);
-
   downloadFile(uuidName, fileName);
 };
 
@@ -961,6 +1143,19 @@ const updateOrderStatus = (newStatus) => {
     ElMessage.warning("请上传合同扫描件后再执行签约操作！");
     return;
   }
+  if (newStatus === 2 && state.orderContentList.length === 0) {
+    ElMessage.warning("订单内容不能为空，请检查订单内容信息！");
+    return;
+  }
+  if (
+    newStatus === 2 &&
+    state.orderContentList[0].categoryaid === 0 &&
+    !state.orderContentList[0].starttanent
+  ) {
+    ElMessage.warning("安居订单尚未确认起租及退租时间，请与房管中心联系确认！");
+    return;
+  }
+
   if (newStatus === 2) {
     if (!state.orderInfoForm.totalprice || !state.orderInfoForm.contractprice) {
       ElMessage.warning("订单总价及平台合同价不能为空！");
@@ -982,15 +1177,19 @@ const updateOrderStatus = (newStatus) => {
     contractpricefromfront: state.orderInfoForm.contractprice,
   };
 
-  ElMessageBox.confirm(
-    `确认要执行${showstatus(newStatus)}操作吗？`,
-    "操作确认",
-    {
-      confirmButtonText: "确认",
-      cancelButtonText: "取消",
-      type: "warning",
-    },
-  )
+  // 确认框的时候，如果newStatus是2，提示语里加上“请确认订单总价和合同价是否正确”，如果newStatus是-3，提示语里加上“请确认已填写订单终止说明”
+  let confirmMessage = `确认要执行${showstatus(newStatus)}操作吗？`;
+  if (newStatus === 2) {
+    confirmMessage = `请确认订单总价为¥${state.orderInfoForm.totalprice}，合同价为¥${state.orderInfoForm.contractprice}，是否继续执行签约操作？`;
+  } else if (newStatus === -3) {
+    confirmMessage = `请确认已填写订单终止说明，是否继续执行终止操作？`;
+  }
+
+  ElMessageBox.confirm(confirmMessage, "操作确认", {
+    confirmButtonText: "确认",
+    cancelButtonText: "取消",
+    type: "warning",
+  })
     .then(() => {
       request.post("/updateorderstatusfrombmanage", payload).then((res) => {
         if (res.retcode === 200 || res.retcode === "200") {
@@ -1064,7 +1263,6 @@ const handlePictureCardPreview = (uploadedFile) => {
 };
 
 const handleUploadFileOver = (res) => {
-  console.log(state.orderInfoForm.imagelist);
   if (res.status === 200) {
     let curObj = {
       name: state.orderInfoForm.imagelistreal.length + 1,
@@ -1093,6 +1291,7 @@ const onCompanyTableRowDBClicked = (row, column, event) => {
   state.orderActionList = [];
   state.contractFileList = [];
   state.finishFileList = [];
+  state.paymentPlan = {};
 
   // 赋值基础信息
   Object.keys(state.orderInfoForm).forEach((key) => {
@@ -1100,6 +1299,11 @@ const onCompanyTableRowDBClicked = (row, column, event) => {
   });
 
   state.orderInfoForm.status = row.status;
+  state.orderInfoForm.categoryaid = row.categoryaid;
+
+  if (row.categoryaid === 0) {
+    getPaymentPlanByOrderId(row.id);
+  }
 
   // 获取采购商有效额度（模拟接口，实际需后端提供）
   // request.post("/getccompanycredit", { id: row.ccompanyid }).then((res) => {
@@ -1122,7 +1326,6 @@ const onCompanyTableRowDBClicked = (row, column, event) => {
     if (res && res.retcode === "200" && res.data) {
       // 遍历res.data.data数组，如果当前对象的doctype = "ORDER_CONTRACT_FILE",state.orderInfoForm.contractfile = 对象的filename，state.orderInfoForm.finishfiles = []
       res.data.forEach((item) => {
-        console.info("item", item);
         if (item.doctype === "ORDER_CONTRACT_FILE") {
           state.orderInfoForm.contractfile = item.filename;
           state.contractFileList.push({
@@ -1143,6 +1346,28 @@ const onCompanyTableRowDBClicked = (row, column, event) => {
   state.showOrderInfoDialog = true;
 };
 
+// 异步获取订单的支付计划（仅针对安居类订单）
+const getPaymentPlanByOrderId = (orderid) => {
+  request
+    .post("getpaymentplanbyorderid", { orderid: orderid })
+    .then((res) => {
+      console.info("获取支付计划接口返回：", res);
+      if (res && res.retcode === "200" && res.data) {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          state.paymentPlan = res.data[0];
+          console.info("订单支付计划：", state.paymentPlan);
+        } else {
+          state.paymentPlan = {};
+        }
+      } else {
+        state.paymentPlan = {};
+      }
+    })
+    .catch(() => {
+      state.paymentPlan = {};
+    });
+};
+
 const getattachfiles = () => {
   // 获取合同文件和结项证明文件
   request
@@ -1151,7 +1376,6 @@ const getattachfiles = () => {
       if (res && res.retcode === "200" && res.data) {
         // 遍历res.data.data数组，如果当前对象的doctype = "ORDER_CONTRACT_FILE",state.orderInfoForm.contractfile = 对象的filename，state.orderInfoForm.finishfiles = []
         res.data.forEach((item) => {
-          console.info("item", item);
           if (item.doctype === "ORDER_CONTRACT_FILE") {
             state.orderInfoForm.contractfile = item.filename;
             state.contractFileList = [];
@@ -1173,7 +1397,7 @@ const getattachfiles = () => {
 };
 
 const showstatus = (status) => {
-  if (status === 0) return "待审核";
+  if (status === 0) return "待主管审核";
   else if (status === 1) return "待签约";
   else if (status === 2) return "服务中";
   else if (status === 3) return "已结项";
@@ -1209,6 +1433,7 @@ const resetOrderForm = () => {
   state.orderActionList = [];
   state.contractFileList = [];
   state.finishFileList = [];
+  state.orderInfoForm.creditcode = "";
 };
 
 const resetFileUploadDialogForm = () => {
@@ -1234,10 +1459,38 @@ const getOrders = () => {
   });
 };
 
+// 当合同金额变化时
+const handleContractPriceChange = (newValue) => {
+  if (state.orderInfoForm.categoryaid === 0) {
+    let payload = {};
+    request
+      .post("getestimatedpaymentplanbyorderidandcontractprice", {
+        orderid: state.orderInfoForm.id,
+        contractprice: newValue,
+      })
+      .then((res) => {
+        console.info("获取支付计划接口返回：", res);
+        if (res && res.retcode === "200" && res.data) {
+          if (Array.isArray(res.data) && res.data.length > 0) {
+            state.paymentPlan = res.data[0];
+            console.info("订单支付计划：", state.paymentPlan);
+          } else {
+            state.paymentPlan = {};
+          }
+        } else {
+          state.paymentPlan = {};
+        }
+      })
+      .catch(() => {
+        state.paymentPlan = {};
+      });
+  }
+};
+
 // 组件挂载时加载数据
 onMounted(() => {
   getOrders();
-  console.info("store.state.userinfo", store.state.userinfo);
+  getCategories();
 });
 </script>
 
@@ -1247,6 +1500,9 @@ onMounted(() => {
   height: 100%;
   padding: 20px;
   background-color: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 // 搜索区域美化
@@ -1256,6 +1512,7 @@ onMounted(() => {
   padding: 20px;
   margin-bottom: 20px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 
   .search-title {
     font-size: 16px;
@@ -1284,13 +1541,22 @@ onMounted(() => {
   }
 }
 
+// 表格容器布局
+.table-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
 // 表格区域美化
 .table-card {
   background: #fff;
   border-radius: 8px;
   padding: 10px;
-  margin-bottom: 20px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  flex: 1;
+  overflow-y: auto;
 }
 
 .price-text {
@@ -1306,6 +1572,8 @@ onMounted(() => {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+  flex-shrink: 0;
 }
 
 // 详情弹窗美化
@@ -1458,6 +1726,14 @@ onMounted(() => {
       border-radius: 4px;
       gap: 4px;
     }
+  }
+
+  .order-pay-plan {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #eee;
   }
 
   // 文件上传区域样式

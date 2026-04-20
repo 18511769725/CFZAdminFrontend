@@ -32,11 +32,16 @@
         style="width: 100%; height: calc(100vh - 240px)"
         @row-dblclick="onUserTableRowDBClicked"
       >
-        <el-table-column fixed prop="id" label="序号" min-width="20%" />
-        <el-table-column prop="name" label="姓名" min-width="30%" />
-        <el-table-column prop="phone" label="手机号" min-width="30%" />
-        <el-table-column prop="email" label="电子邮箱" min-width="30%" />
-        <el-table-column prop="ccompanyname" label="企业名称" min-width="30%" />
+        <el-table-column fixed prop="id" label="序号" min-width="10%" />
+        <el-table-column prop="name" label="姓名" min-width="20%" />
+        <el-table-column prop="phone" label="手机号" min-width="20%" />
+        <el-table-column prop="email" label="电子邮箱" min-width="20%" />
+        <el-table-column prop="ccompanyname" label="企业名称" min-width="20%" />
+        <el-table-column
+          prop="companycreditcode"
+          label="企业统一社会信用编码"
+          min-width="30%"
+        />
         <el-table-column prop="isadmin" label="身份角色" min-width="20%">
           <template #default="scope">
             {{ showcharactor(scope.row.isadmin) }}
@@ -52,7 +57,7 @@
             {{ showstatus(scope.row.status) }}
           </template>
         </el-table-column>
-        <el-table-column fixed="right" label="Operations" min-width="40%">
+        <el-table-column fixed="right" label="Operations" min-width="20%">
           <template #default="scope">
             <el-button
               type="danger"

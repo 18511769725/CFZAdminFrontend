@@ -48,6 +48,11 @@ const routes = [
         component: () => import("../components/mobile/MPolicyView.vue"),
       },
       {
+        path: "/mtopc",
+        name: "到PC端查看",
+        component: () => import("../components/mobile/MUsePC.vue"),
+      },
+      {
         path: "/mlogin",
         name: "移动端登录",
         component: () => import("../components/mobile/MLoginView.vue"),
@@ -97,6 +102,11 @@ const routes = [
         name: "额度配置管理",
         component: () => import("../components/pc/CreditManagerView.vue"),
       },
+      {
+        path: "/biview",
+        name: "数据驾驶舱",
+        component: () => import("../components/pc/BIView.vue"),
+      },
     ],
   },
   {
@@ -143,6 +153,10 @@ let expire = 21600000;
 router.beforeEach((to, from, next) => {
   let date = new Date().getTime();
   console.info("router.beforeEach", to.path);
+  if (isMobile() && to.path !== "/mtopc") {
+    next("/mtopc");
+    return;
+  }
   if (to.path === "/submitaccount") {
     console.log("submitaccount");
     next();
@@ -169,7 +183,8 @@ router.beforeEach((to, from, next) => {
       if (isMobile()) {
         console.log("5");
         console.info("mlogin", "mlogin");
-        next("/mlogin");
+        //next("/mlogin");
+        next("/mtopc");
         console.log("6");
       } else {
         console.log("7");
@@ -192,7 +207,8 @@ router.beforeEach((to, from, next) => {
         console.log("9");
         if (isMobile()) {
           console.log("10");
-          next("/mlogin");
+          //next("/mlogin");
+          next("/mtopc");
           console.log("11");
         } else {
           console.log("12");

@@ -8,6 +8,37 @@
           placeholder="产品名称"
           style="width: 180px; height: 32px; margin-left: 25px"
         />
+        <el-input
+          v-model.trim="state.getInfoParams.bcompanyname"
+          clearable
+          placeholder="供应商名称"
+          style="width: 180px; height: 32px; margin-left: 25px"
+        />
+        <el-select
+          v-model="state.getInfoParams.categoryaid"
+          placeholder="筛选一级品类"
+          @change="getCategorybs(state.getInfoParams.categoryaid)"
+          style="width: 180px; height: 32px; margin-left: 25px"
+        >
+          <el-option
+            v-for="item in state.categories_a"
+            :key="item.id"
+            :label="item.title"
+            :value="item.id"
+          />
+        </el-select>
+        <el-select
+          v-model="state.getInfoParams.categorybid"
+          placeholder="筛选二级品类"
+          style="width: 180px; height: 32px; margin-left: 25px"
+        >
+          <el-option
+            v-for="item in state.searchCategorybs"
+            :key="item.id"
+            :label="item.title"
+            :value="item.id"
+          />
+        </el-select>
         <el-button type="primary" @click="getProducts" style="margin-left: 25px"
           >点击查询</el-button
         >
@@ -579,6 +610,9 @@ const state = reactive({
     currentPage: 1,
     pageSize: 30,
     productname: "",
+    bcompanyname: "",
+    categoryaid: "",
+    categorybid: "",
     contact: "",
     telnumber: "",
     channel: "",
@@ -623,7 +657,22 @@ const state = reactive({
     categoryaid: "",
   },
   creditpackagelist: [],
+  searchCategorybs: [],
 });
+
+const getCategorybs = (categoryaid) => {
+  let payload = {
+    categoryaid: categoryaid,
+  };
+  request.post("/getbcategoriesbyaid", payload).then((res) => {
+    if (res && res.retcode === "200" && res.data) {
+      state.searchCategorybs = res.data.arr_category_b;
+      state.getInfoParams.categorybid = "";
+    } else {
+      ElMessage.error("获取二级分类列表失败！");
+    }
+  });
+};
 
 const handleSelectAChange = (e) => {
   // 当一级分类选择变化后，要先清空二级分类的选择结果，并重新拉取二级分类的备选项

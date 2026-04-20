@@ -102,9 +102,6 @@ const router = useRouter();
 
 const login = () => {
   var form_obj = JSON.parse(JSON.stringify(formData));
-  // console.log(form_obj);
-  // console.log(form_obj.username);
-  // console.log(form_obj.password);
 
   let payload = {
     username: form_obj.username,
@@ -117,29 +114,24 @@ const login = () => {
         message: "登录成功",
         type: "success",
       });
-      console.log("ccc111");
       let tokenObj = { token: " isLogin", startTime: new Date().getTime() };
       window.localStorage.setItem("isLogin", JSON.stringify(tokenObj));
       localStorage.setItem(
         "username",
-        JSON.parse(JSON.stringify(res.retBody.username))
+        JSON.parse(JSON.stringify(res.retBody.username)),
       );
-      console.log("ccc222");
       localStorage.setItem(
         "userid",
-        JSON.parse(JSON.stringify(res.retBody.userid))
+        JSON.parse(JSON.stringify(res.retBody.userid)),
       );
-      console.log("ccc333");
       localStorage.setItem(
         "email",
-        JSON.parse(JSON.stringify(res.retBody.email))
+        JSON.parse(JSON.stringify(res.retBody.email)),
       );
-      console.log("ccc444");
       localStorage.setItem(
         "level",
-        JSON.parse(JSON.stringify(res.retBody.level))
+        JSON.parse(JSON.stringify(res.retBody.level)),
       );
-      console.log("ccc555");
       let objCurUserInfo = {
         username: JSON.parse(JSON.stringify(res.retBody.username)),
         userid: JSON.parse(JSON.stringify(res.retBody.userid)),
@@ -147,12 +139,8 @@ const login = () => {
         level: JSON.parse(JSON.stringify(res.retBody.level)),
         avation: "",
       };
-      console.log("ccc666");
       store.commit("userLogin", objCurUserInfo);
-      console.log("ccc777");
-      //console.log("to games");
-      router.push("/games");
-      //console.log("to games 2");
+      router.push("/biview");
     } else if (res.retcode === "400") {
       ElMessage.error("账号状态异常，请联系管理员！");
     } else {

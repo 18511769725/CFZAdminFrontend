@@ -33,6 +33,7 @@
               </el-icon>
               <span>益企营管理后台</span>
             </template>
+            <el-menu-item index="1-0" path="/biview">数据驾驶舱</el-menu-item>
             <el-menu-item index="1-1" path="/bcompanies">商户管理</el-menu-item>
             <el-menu-item index="1-2" path="/products">商品管理</el-menu-item>
             <el-menu-item index="1-3" path="/ccompanies"
@@ -49,7 +50,7 @@
               >额度配置管理</el-menu-item
             >
           </el-sub-menu>
-          <el-menu-item index="2" v-if="showOthers" path="/tasks">
+          <!-- <el-menu-item index="2" v-if="showOthers" path="/tasks">
             <el-icon><paperclip /></el-icon>
             <span>任务管理</span>
           </el-menu-item>
@@ -75,7 +76,7 @@
           >
             <el-icon><document /></el-icon>
             <span>招商数据</span>
-          </el-menu-item>
+          </el-menu-item> -->
           <el-menu-item
             v-if="store.state.userinfo.level === '0'"
             index="4"
@@ -86,7 +87,7 @@
           </el-menu-item>
         </el-menu>
       </div>
-      <div class="content-wrapper">
+      <div class="content-wrapper" :class="{ 'content-wrapper-bi': isBiRoute }">
         <router-view></router-view>
       </div>
     </div>
@@ -165,14 +166,17 @@ import {
   Setting,
 } from "@element-plus/icons-vue";
 import { ElButton, ElMessage, ElMessageBox } from "element-plus";
-import { onMounted, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onMounted, reactive, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import store from "../../store";
 import request from "../../utils/request";
 
 const router = useRouter();
+const route = useRoute();
 
-const ActiveIndex = ref("5");
+const isBiRoute = computed(() => route.path === "/biview");
+
+const ActiveIndex = ref("1-0");
 
 const state = reactive({
   resetPasswordDialog: false, // 修改密码窗体显示控制
@@ -235,6 +239,9 @@ const handleSelect = (key, keyPath) => {
       return;
     case "1-7":
       router.push("/creditmanager");
+      return;
+    case "1-0":
+      router.push("/biview");
       return;
     default:
       break;
@@ -344,7 +351,7 @@ onMounted(() => {
       ElMessage.error("获取用户列数据失败！");
     }
   });
-  router.push("/games");
+  router.push("/biview");
 });
 </script>
 
@@ -420,6 +427,38 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #9eb6e8 transparent;
+}
+
+.content-wrapper-bi {
+  background:
+    radial-gradient(circle at 90% 0%, #d5f2ff 0%, transparent 42%),
+    radial-gradient(circle at 0% 100%, #dfe7ff 0%, transparent 50%),
+    linear-gradient(180deg, #e9f2ff 0%, #f7f5ff 100%);
+}
+
+.content-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b9cbf0 0%, #8fa9de 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9eb6e8 0%, #6f90d5 100%);
+  background-clip: content-box;
 }
 
 .line-wrapper {
