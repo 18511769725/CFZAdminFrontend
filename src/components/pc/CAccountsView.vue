@@ -20,6 +20,12 @@
           placeholder="企业名称"
           style="width: 180px; height: 32px; margin-left: 25px"
         />
+        <el-input
+          v-model.trim="state.getInfoParams.companycreditcode"
+          clearable
+          placeholder="统一社会信用编码"
+          style="width: 180px; height: 32px; margin-left: 25px"
+        />
         <el-button type="primary" @click="getUsers" style="margin-left: 25px"
           >点击查询</el-button
         >
@@ -120,6 +126,7 @@
           <el-select
             v-model="state.userInfoForm.ccompanyid"
             placeholder="请选择企业名称"
+            filterable
           >
             <el-option
               v-for="item in state.companynames"
@@ -196,6 +203,7 @@ const state = reactive({
     name: "",
     phone: "",
     companyname: "",
+    companycreditcode: "",
   },
   userInfoForm: {
     id: "",

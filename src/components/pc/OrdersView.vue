@@ -1,43 +1,46 @@
 <template>
-  <div class="content-wrapper">
-    <!-- 搜索区域 -->
-    <div class="table-wrapper">
-      <div class="search-card">
-        <div class="search-title">订单查询</div>
-        <div class="search-form">
+  <div class="fagai-dynamic-container">
+    <el-card shadow="hover" class="page-card">
+      <!-- 搜索区域 -->
+      <div class="search-section">
+        <div class="search-row">
           <el-input
             v-model.trim="state.getInfoParams.contractid"
             clearable
             placeholder="合同编号"
             size="default"
-            class="search-input"
+            class="search-item"
           />
           <el-input
             v-model.trim="state.getInfoParams.bcompanyname"
             clearable
             placeholder="供应商名称"
             size="default"
-            class="search-input"
+            class="search-item"
           />
           <el-input
             v-model.trim="state.getInfoParams.ccompanyname"
             clearable
             placeholder="采购方企业名称"
             size="default"
-            class="search-input"
+            class="search-item"
           />
           <el-input
             v-model.trim="state.getInfoParams.cusername"
             clearable
             placeholder="采购人姓名"
             size="default"
-            class="search-input"
+            class="search-item"
           />
+        </div>
+
+        <div class="search-row">
           <el-select
             v-model="state.getInfoParams.categoryaid"
             placeholder="筛选一级品类"
             @change="getCategorybs(state.getInfoParams.categoryaid)"
-            style="width: 180px; height: 32px; margin-left: 25px"
+            class="search-item"
+            clearable
           >
             <el-option
               v-for="item in state.categories_a"
@@ -49,7 +52,8 @@
           <el-select
             v-model="state.getInfoParams.status"
             placeholder="筛选订单状态"
-            style="width: 180px; height: 32px; margin-left: 25px"
+            class="search-item"
+            clearable
           >
             <el-option
               v-for="item in state.statusOptions"
@@ -58,88 +62,123 @@
               :value="item.id"
             />
           </el-select>
+          <el-date-picker
+            v-model="state.getInfoParams.timeRange"
+            type="daterange"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            class="search-item search-date-picker"
+          />
+          <el-checkbox
+            v-model="state.getInfoParams.showOnlyActive"
+            class="search-checkbox"
+            @change="getOrders"
+            >只显示有效订单</el-checkbox
+          >
           <el-button type="primary" @click="getOrders" class="search-btn">
             <el-icon><Search /></el-icon>
-            点击查询
+            查询
+          </el-button>
+          <el-button @click="downloadFile" class="search-btn">
+            <el-icon><Download /></el-icon>
+            下载
           </el-button>
         </div>
       </div>
 
       <!-- 订单列表 -->
-      <div class="table-card">
-        <el-table
-          :data="state.orderList"
-          style="width: 100%"
-          @row-dblclick="onCompanyTableRowDBClicked"
-          stripe
-          border
-          :header-cell-style="{
-            background: '#f8f9fa',
-            color: '#333',
-            fontWeight: '500',
-          }"
-          :empty-text="emptyTableText"
-          size="default"
+      <el-table
+        :data="state.orderList"
+        style="width: 100%"
+        @row-dblclick="onCompanyTableRowDBClicked"
+        stripe
+        border
+        :header-cell-style="{
+          background: '#f8f9fa',
+          color: '#333',
+          fontWeight: '500',
+        }"
+        :empty-text="emptyTableText"
+        size="default"
+        class="full-table"
+        table-layout="fixed"
+      >
+        <el-table-column prop="id" label="ID" min-width="60px" align="center" />
+        <el-table-column
+          prop="contractid"
+          label="合同编号"
+          min-width="100px"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="totalprice"
+          label="订单价格"
+          min-width="70px"
+          align="right"
         >
-          <el-table-column
-            prop="id"
-            label="ID"
-            min-width="60px"
-            align="center"
-          />
-          <el-table-column
-            prop="contractid"
-            label="合同编号"
-            min-width="100px"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="totalprice"
-            label="订单价格"
-            min-width="70px"
-            align="right"
-          >
-            <template #default="scope">
-              <span class="price-text">¥{{ scope.row.totalprice }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="bcompanyname"
-            label="供应商"
-            min-width="150px"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="ccompanyname"
-            label="采购方"
-            min-width="150px"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="cusername"
-            label="采购人"
-            min-width="60px"
-            align="center"
-          />
-          <el-table-column
-            prop="status"
-            label="订单状态"
-            min-width="80px"
-            align="center"
-          >
-            <template #default="scope">
-              <el-tag :type="getStatusTagType(scope.row.status)">{{
-                showstatus(scope.row.status)
-              }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="createtime" label="订单时间" min-width="180px">
-            <template #default="scope">
-              {{ timestamp2datetime(scope.row.createtime) }}
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+          <template #default="scope">
+            <span class="price-text">¥{{ scope.row.totalprice }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="bcompanyname"
+          label="供应商"
+          min-width="150px"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="ccompanyname"
+          label="采购方"
+          min-width="150px"
+          show-overflow-tooltip
+        />
+        <el-table-column prop="ccompanygrade" label="企业类型" min-width="70px">
+          <template #default="scope">
+            {{ showCompanyGrade(scope.row.ccompanygrade) }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="cusername"
+          label="采购人"
+          min-width="60px"
+          align="center"
+        />
+        <el-table-column
+          prop="status"
+          label="订单状态"
+          min-width="80px"
+          align="center"
+        >
+          <template #default="scope">
+            <el-tag :type="getStatusTagType(scope.row.status)">{{
+              showstatus(scope.row.status)
+            }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="createtime"
+          label="订单时间"
+          min-width="180px"
+          v-if="!state.getInfoParams.showOnlyActive"
+        >
+          <template #default="scope">
+            {{ timestamp2datetime(scope.row.createtime) }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="approvetime"
+          label="审批时间"
+          min-width="180px"
+          v-if="state.getInfoParams.showOnlyActive"
+        >
+          <template #default="scope">
+            {{ timestamp2datetime(scope.row.approvetime) }}
+          </template>
+        </el-table-column>
+      </el-table>
 
       <!-- 分页 -->
       <div class="pagination-wrapper">
@@ -153,7 +192,7 @@
           size="default"
         />
       </div>
-    </div>
+    </el-card>
 
     <!-- 订单信息模态窗口 -->
     <el-dialog
@@ -506,6 +545,34 @@
                     class="read-only-input"
                   />
                 </el-form-item>
+                <el-form-item label="租户姓名">
+                  <el-input
+                    :value="state.paymentPlan.tanentname"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
+                <el-form-item label="租户身份证">
+                  <el-input
+                    :value="state.paymentPlan.tanentid"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
+                <el-form-item label="租户电话">
+                  <el-input
+                    :value="state.paymentPlan.phone"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
+                <el-form-item label="租户职务">
+                  <el-input
+                    :value="state.paymentPlan.title"
+                    readonly
+                    class="read-only-input"
+                  />
+                </el-form-item>
               </div>
             </div>
           </div>
@@ -572,9 +639,13 @@
               <el-icon><FolderOpened /></el-icon>
               <h3>文件列表</h3>
             </div>
-            <div class="form-grid">
+            <div class="form-line">
               <!-- 需求说明文件 -->
-              <el-form-item label="需求说明文件" class="file-form-item">
+              <el-form-item
+                label="需求说明文件"
+                class="file-form-item"
+                style="width: 45%"
+              >
                 <div class="file-upload-wrapper">
                   <el-upload
                     :action="store.state.uploadApi"
@@ -613,7 +684,11 @@
               </el-form-item>
 
               <!-- 项目结项证明文件 handleRemoveFinishFile-->
-              <el-form-item label="结项证明文件" class="file-form-item">
+              <el-form-item
+                label="结项证明文件"
+                class="file-form-item"
+                style="width: 45%"
+              >
                 <div class="file-upload-wrapper">
                   <el-upload
                     :action="store.state.uploadApi"
@@ -650,9 +725,14 @@
                   </div>
                 </div>
               </el-form-item>
-
+            </div>
+            <div class="form-line">
               <!-- 订单终止说明 -->
-              <el-form-item label="订单终止说明" class="full-width-item">
+              <el-form-item
+                label="订单终止说明"
+                class="full-width-item"
+                style="width: 100%"
+              >
                 <el-input
                   v-model="state.orderInfoForm.terminatedesc"
                   type="textarea"
@@ -714,6 +794,23 @@
             icon="SwitchButton"
           >
             服务终止
+          </el-button>
+          <!-- 当status=-5时，处理申请取消订单 -->
+          <el-button
+            type="warning"
+            @click="rejectcancelorder()"
+            v-if="state.orderInfoForm.status === -5"
+            icon="WarningFilled"
+          >
+            拒绝取消订单
+          </el-button>
+          <el-button
+            type="warning"
+            @click="approvecancelorder()"
+            v-if="state.orderInfoForm.status === -5"
+            icon="WarningFilled"
+          >
+            同意取消订单
           </el-button>
           <!-- 关闭按钮 -->
           <el-button @click="state.showOrderInfoDialog = false" icon="Close">
@@ -790,10 +887,12 @@ const state = reactive({
     contractid: "",
     bcompanyname: "",
     ccompanyname: "",
+    timeRange: [],
     cusername: "",
     categoryaid: "",
     categorybid: "",
     status: "",
+    showOnlyActive: false, // 新增字段，是否只显示有效订单
   },
   dialogViewPicVisible: false,
   curDialogImageUrl: "",
@@ -867,11 +966,12 @@ const state = reactive({
     { id: 1, title: "待签约" },
     { id: 2, title: "服务中" },
     { id: 3, title: "已结项" },
-    { id: 4, title: "待后台签约" },
+    { id: 4, title: "待平台管理员审批" },
     { id: -1, title: "用户取消订单" },
     { id: -2, title: "审核未通过" },
     { id: -3, title: "后台终止" },
     { id: -4, title: "主管审核拒绝" },
+    { id: -5, title: "申请取消" },
   ],
 });
 
@@ -920,6 +1020,7 @@ const getStatusTagType = (status) => {
     "-2": "danger", // 审核未通过
     "-3": "danger", // 后台终止
     "-4": "danger", // 主管审核拒绝
+    "-5": "warning", // 申请取消
   };
   return statusMap[status] || "default";
 };
@@ -970,6 +1071,18 @@ const parseOrderContent = (contentStr) => {
   }
 };
 
+// 显示企业类型
+const showCompanyGrade = (grade) => {
+  const gradeMap = {
+    1: "总部型",
+    2: "领军型",
+    3: "领跑型",
+    4: "潜力型",
+    5: "未知类型",
+  };
+  return gradeMap[grade] || "未知类型";
+};
+
 // 解析操作历史
 const parseOrderActionRecords = (recordsStr) => {
   if (!recordsStr) {
@@ -994,58 +1107,39 @@ const getActionDesc = (action) => {
     contract_signed: "合同签署",
     order_accomplished: "服务结项",
     order_suspended: "服务后台终止",
+    cancel_order_request: "申请取消订单",
+    reject_cancel_order: "拒绝取消订单",
+    approve_cancel_order: "同意取消订单",
   };
   return actionMap[action] || action;
 };
 
 // 下载文件的前端方法
-const downloadFile = async (uuidname, filename) => {
+const downloadFile = async () => {
   try {
-    // 给请求头加上user和pass两个字段，值从store里取到
-    const response = await axios.post(
-      "https://mvpme82.cloud/api/cqtdownload",
-      { uuidname, filename }, // 请求参数
-      {
-        // 关键配置：告诉 Axios 响应是二进制流，不解析 JSON
-        responseType: "blob", // 必设！指定响应类型为二进制大对象
-        headers: {
-          "Content-Type": "application/json", // 后端接收 JSON 请求体，保持不变
-          user: "mvpme82",
-          pass: "chaoqitong",
-        },
-      },
-    );
+    const payload = {
+      ...state.getInfoParams,
+      userid: store.state.userinfo.userid,
+    };
 
-    // 处理文件下载（从响应中提取文件流并触发下载）
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"] || "application/octet-stream",
-    });
+    const res = await request.post("/getordersexcelfile", payload);
+    const fileName = res?.data?.filename || res?.filename;
 
-    // 从响应头中解析文件名（后端已编码，前端自动解码）
-    const contentDisposition = response.headers["content-disposition"];
-    let fileName = filename;
-    if (contentDisposition) {
-      // 匹配 filename*=UTF-8'' 后的编码文件名并解码
-      const fileNameMatch = contentDisposition.match(/filename\*=UTF-8''(.*)/);
-      if (fileNameMatch && fileNameMatch[1]) {
-        fileName = decodeURIComponent(fileNameMatch[1]);
-      }
+    if (!fileName) {
+      ElMessage.error("获取下载文件名失败");
+      return;
     }
 
-    // 创建下载链接并触发点击
-    const url = window.URL.createObjectURL(blob);
+    const downloadUrl = `https://mvpme82.cloud/data/${fileName}`;
     const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName; // 设置下载文件名
+    link.href = downloadUrl;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
-
-    // 清理资源
     document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error("下载失败：", error);
-    alert("文件下载失败，请重试");
+    ElMessage.error("文件下载失败，请重试");
   }
 };
 
@@ -1058,7 +1152,15 @@ const downloadFileOuter = (fileList) => {
   let fileName = fileList[0].name;
   let uuidName = fileList[0].url;
 
-  downloadFile(uuidName, fileName);
+  const downloadUrl = `https://mvpme82.cloud/data/${uuidName}`;
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.download = fileName;
+  link.target = "_blank";
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 
 // 文件超出数量限制
@@ -1209,6 +1311,60 @@ const updateOrderStatus = (newStatus) => {
     });
 };
 
+const rejectcancelorder = () => {
+  let payload = {
+    orderid: state.orderInfoForm.id,
+    userid: store.state.userinfo.userid,
+    username: store.state.userinfo.username,
+  };
+  ElMessageBox.confirm("确认要拒绝取消订单吗？", "操作确认", {
+    confirmButtonText: "确认",
+    cancelButtonText: "取消",
+    type: "warning",
+  })
+    .then(() => {
+      request.post("/rejectcancelorderfrombmanage", payload).then((res) => {
+        if (res.retcode === 200 || res.retcode === "200") {
+          ElMessage.success("操作成功，订单状态已更新为用户取消订单");
+          state.showOrderInfoDialog = false;
+          getOrders();
+        } else {
+          ElMessage.error("操作失败，请重试");
+        }
+      });
+    })
+    .catch(() => {
+      ElMessage.info("已取消操作");
+    });
+};
+
+const approvecancelorder = () => {
+  let payload = {
+    orderid: state.orderInfoForm.id,
+    userid: store.state.userinfo.userid,
+    username: store.state.userinfo.username,
+  };
+  ElMessageBox.confirm("确认要同意取消订单吗？", "操作确认", {
+    confirmButtonText: "确认",
+    cancelButtonText: "取消",
+    type: "warning",
+  })
+    .then(() => {
+      request.post("/approvecancelorderfrombmanage", payload).then((res) => {
+        if (res.retcode === 200 || res.retcode === "200") {
+          ElMessage.success("操作成功，订单状态已更新为用户取消订单");
+          state.showOrderInfoDialog = false;
+          getOrders();
+        } else {
+          ElMessage.error("操作失败，请重试");
+        }
+      });
+    })
+    .catch(() => {
+      ElMessage.info("已取消操作");
+    });
+};
+
 // 根据状态获取操作key
 const getActionKeyByStatus = (status) => {
   const statusMap = {
@@ -1342,7 +1498,21 @@ const onCompanyTableRowDBClicked = (row, column, event) => {
       });
     }
   });
-
+  // 如果是安居产品，获取承租人姓名及身份证号,延迟100ms执行，确保订单内容已解析完成
+  setTimeout(() => {
+    if (row.categoryaid === 0) {
+      request
+        .post("/gettanentinfobyorderid", { orderId: row.id })
+        .then((res) => {
+          if (res && res.code === "200" && res.data) {
+            state.paymentPlan.tanentname = res.data[0].tanentname || "";
+            state.paymentPlan.tanentid = res.data[0].tanentid || "";
+            state.paymentPlan.phone = res.data[0].phone || "";
+            state.paymentPlan.title = res.data[0].title || "";
+          }
+        });
+    }
+  }, 100);
   state.showOrderInfoDialog = true;
 };
 
@@ -1397,15 +1567,26 @@ const getattachfiles = () => {
 };
 
 const showstatus = (status) => {
-  if (status === 0) return "待主管审核";
-  else if (status === 1) return "待签约";
-  else if (status === 2) return "服务中";
-  else if (status === 3) return "已结项";
-  else if (status === 4) return "主管审批通过";
-  else if (status === -1) return "用户取消订单";
-  else if (status === -2) return "审核未通过";
-  else if (status === -3) return "后台终止";
-  else if (status === -4) return "主管审批拒绝";
+  if (status === 0)
+    return "待主管审核"; //待主管审核
+  else if (status === 1)
+    return "待签约"; //待签约
+  else if (status === 2)
+    return "服务中"; //服务中
+  else if (status === 3)
+    return "已结项"; //已结项
+  else if (status === 4)
+    return "待平台管理员审批"; //待后台签约
+  else if (status === -1)
+    return "用户取消订单"; //用户取消订单
+  else if (status === -2)
+    return "审核未通过"; //审核未通过
+  else if (status === -3)
+    return "后台终止"; //后台终止
+  else if (status === -4)
+    return "主管审批拒绝"; //主管审批拒绝
+  else if (status === -5)
+    return "申请取消"; //申请取消
   else return "未知状态";
 };
 
@@ -1496,67 +1677,95 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 // 基础布局优化
-.content-wrapper {
-  height: 100%;
+.fagai-dynamic-container {
   padding: 20px;
-  background-color: #f5f7fa;
+  background-color: #f9f9f9;
+  height: calc(100vh - 60px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.page-card {
+  border-radius: 8px;
+  height: 100%;
+}
+
+:deep(.page-card .el-card__body) {
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
+  padding: 20px;
 }
 
 // 搜索区域美化
-.search-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+.search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
   flex-shrink: 0;
+}
 
-  .search-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+// 第一行：输入框（4个均分占满一行）
+.search-row:first-child {
+  .search-item {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+// 第二行：筛选器和按钮
+.search-row:nth-child(2) {
+  .search-item {
+    flex: 1;
+    min-width: 150px;
   }
 
-  .search-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 15px;
-  }
-
-  .search-input {
+  .search-date-picker {
     width: 180px;
     flex-shrink: 0;
   }
+}
 
-  .search-btn {
-    height: 32px;
-    flex-shrink: 0;
+.search-item {
+  :deep(.el-input__wrapper) {
+    box-shadow: 0 0 0 1px var(--el-border-color) inset;
   }
 }
 
-// 表格容器布局
-.table-wrapper {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
+.search-date-picker :deep(.el-date-editor) {
+  width: 100% !important;
 }
 
-// 表格区域美化
-.table-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+.search-checkbox {
+  white-space: nowrap;
+  margin-right: 5px;
+  flex-shrink: 0;
+}
+
+.search-btn {
+  height: 32px;
+  padding: 0 20px;
+  flex-shrink: 0;
+
+  &:last-child {
+    margin-left: auto;
+  }
+}
+
+.full-table {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  --el-table-row-hover-bg-color: #f8f9fa;
 }
 
 .price-text {
@@ -1568,12 +1777,9 @@ onMounted(() => {
 .pagination-wrapper {
   display: flex;
   justify-content: center;
-  padding: 10px 0;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  margin-top: 20px;
+  padding: 15px 0 0 0;
   flex-shrink: 0;
+  margin-top: 15px;
 }
 
 // 详情弹窗美化
@@ -1667,6 +1873,13 @@ onMounted(() => {
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+
+    .form-line {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
     }
   }
 
@@ -1822,7 +2035,14 @@ onMounted(() => {
     align-items: stretch;
   }
 
-  .search-input {
+  .search-input,
+  .search-select,
+  .search-date-picker,
+  .search-btn {
+    width: 100% !important;
+  }
+
+  .search-date-picker :deep(.el-date-editor) {
     width: 100% !important;
   }
 }

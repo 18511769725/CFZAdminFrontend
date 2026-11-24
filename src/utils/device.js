@@ -22,8 +22,11 @@ export const isMobile = () => {
     "wap",
     "mobile",
   ];
-  // 屏幕宽度小于768px也视为移动端
+  const matchesMobileUA = mobileKeywords.some((keyword) =>
+    userAgent.includes(keyword),
+  );
   const isSmallScreen = window.innerWidth < 768;
-  // return isSmallScreen || mobileKeywords.some(keyword => userAgent.includes(keyword))
-  return isSmallScreen;
+  const hasCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+
+  return matchesMobileUA || (isSmallScreen && hasCoarsePointer);
 };

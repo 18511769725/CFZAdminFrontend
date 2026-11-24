@@ -1,7 +1,7 @@
 <template>
   <div class="home-wrapper">
     <div class="header-wrapper">
-      <div class="system-title">益企营管理后台</div>
+      <div class="system-title">朝阳企业服务平台</div>
       <div class="user-info-wrapper">
         <el-button link @click="handleExit" class="button-text-style"
           >欢迎 {{ store.state.userinfo.username }} 点击安全退出</el-button
@@ -24,7 +24,6 @@
           :default-active="ActiveIndex"
           text-color="#fff"
           @select="handleSelect"
-          style="height: 100%; padding-top: 15px"
         >
           <el-sub-menu index="1">
             <template #title>
@@ -33,21 +32,98 @@
               </el-icon>
               <span>益企营管理后台</span>
             </template>
-            <el-menu-item index="1-0" path="/biview">数据驾驶舱</el-menu-item>
-            <el-menu-item index="1-1" path="/bcompanies">商户管理</el-menu-item>
-            <el-menu-item index="1-2" path="/products">商品管理</el-menu-item>
-            <el-menu-item index="1-3" path="/ccompanies"
+            <el-menu-item index="1-0" path="/biview" v-if="state.userlevel < 4"
+              >数据驾驶舱</el-menu-item
+            >
+            <el-menu-item
+              index="1-8"
+              path="/biorders"
+              v-if="state.userlevel < 4"
+              >订单统计中心</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-1"
+              path="/bcompanies"
+              >商户管理</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-2"
+              path="/products"
+              >商品管理</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-3"
+              path="/ccompanies"
               >重点企业管理</el-menu-item
             >
-            <el-menu-item index="1-4" path="/caccounts"
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-4"
+              path="/caccounts"
               >企业账户管理</el-menu-item
             >
-            <el-menu-item index="1-5" path="/orders">订单管理</el-menu-item>
-            <el-menu-item index="1-6" path="/fagainews"
-              >最新动态管理</el-menu-item
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-5"
+              path="/orders"
+              >订单管理</el-menu-item
             >
-            <el-menu-item index="1-7" path="/creditmanager"
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-9"
+              path="/billingcenter"
+              >账务中心</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-7"
+              path="/creditmanager"
               >额度配置管理</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 2"
+              index="1-12"
+              path="/anjucreditconfig"
+              >安居额度配置</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 2"
+              index="1-15"
+              path="/clearcategoryconfig"
+              >分类权益清零配置</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-13"
+              path="/mediapublic"
+              >宣传发布</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-14"
+              path="/busers"
+              >商户端用户管理</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel == 4"
+              index="1-10"
+              path="/bidepartview"
+              >重点企业服务数据驾驶舱</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel == 1 || state.userlevel == 0"
+              index="1-11"
+              path="/offlineorderadmin"
+              >线下订单管理</el-menu-item
+            >
+            <el-menu-item
+              v-if="state.userlevel >= 0 && state.userlevel < 3"
+              index="1-16"
+              path="/hotlineconfig"
+              >热线配置</el-menu-item
             >
           </el-sub-menu>
           <!-- <el-menu-item index="2" v-if="showOthers" path="/tasks">
@@ -78,7 +154,9 @@
             <span>招商数据</span>
           </el-menu-item> -->
           <el-menu-item
-            v-if="store.state.userinfo.level === '0'"
+            v-if="
+              Number(state.userlevel) === 0 || Number(state.userlevel) === 1
+            "
             index="4"
             path="/users"
           >
@@ -188,6 +266,7 @@ const state = reactive({
   },
   showOthers: 0,
   isallen: store.state.userinfo.username === "孟庆博" ? true : false,
+  userlevel: store.state.userinfo.level,
   //isallen: 1,
 });
 // 导航点击跳转
@@ -242,6 +321,33 @@ const handleSelect = (key, keyPath) => {
       return;
     case "1-0":
       router.push("/biview");
+      return;
+    case "1-8":
+      router.push("/biorders");
+      return;
+    case "1-9":
+      router.push("/billingcenter");
+      return;
+    case "1-10":
+      router.push("/bidepartview");
+      return;
+    case "1-11":
+      router.push("/offlineorderadmin");
+      return;
+    case "1-12":
+      router.push("/anjucreditconfig");
+      return;
+    case "1-15":
+      router.push("/clearcategoryconfig");
+      return;
+    case "1-13":
+      router.push("/mediapublic");
+      return;
+    case "1-14":
+      router.push("/busers");
+      return;
+    case "1-16":
+      router.push("/hotlineconfig");
       return;
     default:
       break;
@@ -342,16 +448,24 @@ const handleResetPassword = () => {
 
 // 当组件被创建并且DOM已经生成之后,默认加载项目管理子页面
 onMounted(() => {
-  // 为全局用户信息数组赋值
-  let payload = {};
-  request.post("/getuserlist", payload).then((res) => {
-    if (res) {
-      store.commit("getUserList", res.data);
-    } else {
-      ElMessage.error("获取用户列数据失败！");
-    }
-  });
-  router.push("/biview");
+  if (state.userlevel < 4) {
+    // 为全局用户信息数组赋值
+    let payload = {};
+    request.post("/getuserlist", payload).then((res) => {
+      if (res) {
+        store.commit("getUserList", res.data);
+      } else {
+        ElMessage.error("获取用户列数据失败！");
+      }
+    });
+    router.push("/biview");
+    ActiveIndex.value = "1-0";
+  } else if (state.userlevel == 4) {
+    router.push("/bidepartview");
+    ActiveIndex.value = "1-10";
+  }
+
+  //router.push("/biview");
 });
 </script>
 
@@ -415,10 +529,37 @@ onMounted(() => {
   height: 100%;
   width: 15%;
   max-width: 400px;
+  min-height: 0;
   background-color: "#545c64";
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+}
+.nav-wrapper :deep(.el-menu-vertical-demo) {
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  padding-top: 15px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #9eb6e8 transparent;
+}
+.nav-wrapper :deep(.el-menu-vertical-demo::-webkit-scrollbar) {
+  width: 8px;
+}
+.nav-wrapper :deep(.el-menu-vertical-demo::-webkit-scrollbar-track) {
+  background: transparent;
+}
+.nav-wrapper :deep(.el-menu-vertical-demo::-webkit-scrollbar-thumb) {
+  background: linear-gradient(180deg, #b9cbf0 0%, #8fa9de 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.nav-wrapper :deep(.el-menu-vertical-demo::-webkit-scrollbar-thumb:hover) {
+  background: linear-gradient(180deg, #9eb6e8 0%, #6f90d5 100%);
+  background-clip: content-box;
 }
 .content-wrapper {
   height: 100%;

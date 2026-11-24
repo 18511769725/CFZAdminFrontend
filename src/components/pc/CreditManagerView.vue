@@ -18,13 +18,13 @@
         <el-table-column
           prop="companytypename"
           label="企业类型"
-          min-width="30%"
+          min-width="20%"
         />
-        <el-table-column prop="packagename" label="套餐名称" min-width="30%" />
+        <el-table-column prop="packagename" label="套餐名称" min-width="20%" />
         <el-table-column
           prop="anjucontent"
           label="安居选项配置"
-          min-width="30%"
+          min-width="40%"
         >
           <template #default="scope">
             {{ showanjutext(scope.row.anjucontent) }}
@@ -45,7 +45,7 @@
             {{ showstatus(scope.row.status) }}
           </template>
         </el-table-column>
-        <el-table-column fixed="right" label="Operations" min-width="40%">
+        <el-table-column fixed="right" label="Operations" min-width="20%">
           <template #default="scope">
             <el-button
               type="danger"

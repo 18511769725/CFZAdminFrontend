@@ -2,10 +2,23 @@ import axios from "axios";
 
 import { ElMessage } from "element-plus";
 
+const getCurrentUserId = () => {
+  try {
+    const localUserId = window.localStorage.getItem("userid");
+    if (localUserId && localUserId !== "undefined" && localUserId !== "null") {
+      return localUserId;
+    }
+  } catch (error) {
+    console.warn("读取 userid 失败:", error);
+  }
+
+  return "";
+};
+
 const request = axios.create({
   baseURL: "https://mvpme82.cloud/api",
   // baseURL: "http://49.232.246.200:8080", // 注意！！ 这里是全局统一加上了 '/api' 前缀，也就是说所有接口都会加上'/api'前缀在，页面里面写接口的时候就不要加 '/api'了，否则会出现2个'/api'，类似 '/api/api/user'这样的报错，切记！！！
-  //baseURL: "http://localhost:8080",
+  //baseURL: "http://localhost:8080/api",
   timeout: 50000,
 });
 // request 拦截器
@@ -16,6 +29,11 @@ request.interceptors.request.use(
     config.headers["Content-Type"] = "application/json;charset=utf-8";
     config.headers["user"] = "mvpme82";
     config.headers["pass"] = "chaoqitong";
+
+    const currentUserId = getCurrentUserId();
+    if (currentUserId) {
+      config.headers["userid"] = currentUserId;
+    }
 
     // config.headers['token'] = user.token;  // 设置请求头
     return config;

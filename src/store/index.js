@@ -10,6 +10,7 @@ const store = createStore({
         email: "",
         level: "",
         avation: "",
+        department: "",
       },
       userlist: [], // 用户列表数据
       arrayDepartments: [
@@ -46,6 +47,7 @@ const store = createStore({
       uploadApi: "https://mvpme82.cloud/api/uploadfile", // 上传文件接口地址
       uploadImageApi: "https://mvpme82.cloud/api/uploadimage",
       getImgurlApi: "https://mvpme82.cloud/api/getimgurl",
+      uploadVideoApi: "https://mvpme82.cloud/api/uploadvideo",
       //uploadApi: "http://localhost:8080/upload", // 上传项目文件接口地址
       //uploadApi: "http://localhost:8080/uploadfile", // 上传普通文件接口地址
     };

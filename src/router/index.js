@@ -53,6 +53,11 @@ const routes = [
         component: () => import("../components/mobile/MUsePC.vue"),
       },
       {
+        path: "/mbi",
+        name: "移动端数据驾驶舱",
+        component: () => import("../components/mobile/MBIView.vue"),
+      },
+      {
         path: "/mlogin",
         name: "移动端登录",
         component: () => import("../components/mobile/MLoginView.vue"),
@@ -98,6 +103,11 @@ const routes = [
         component: () => import("../components/pc/FagainewsView.vue"),
       },
       {
+        path: "/billingcenter",
+        name: "账务中心",
+        component: () => import("../components/pc/BillingCenterView.vue"),
+      },
+      {
         path: "/creditmanager",
         name: "额度配置管理",
         component: () => import("../components/pc/CreditManagerView.vue"),
@@ -106,6 +116,46 @@ const routes = [
         path: "/biview",
         name: "数据驾驶舱",
         component: () => import("../components/pc/BIView.vue"),
+      },
+      {
+        path: "/bidepartview",
+        name: "重点企业服务数据驾驶舱",
+        component: () => import("../components/pc/BIDepartView.vue"),
+      },
+      {
+        path: "/biorders",
+        name: "订单统计分析",
+        component: () => import("../components/pc/BIOrdersView.vue"),
+      },
+      {
+        path: "/offlineorderadmin",
+        name: "线下订单管理",
+        component: () => import("../components/pc/OfflineOrderAdminView.vue"),
+      },
+      {
+        path: "/anjucreditconfig",
+        name: "安居额度配置",
+        component: () => import("../components/pc/AnjuCreditConfigView.vue"),
+      },
+      {
+        path: "/clearcategoryconfig",
+        name: "分类权益清零配置",
+        component: () => import("../components/pc/ClearCategoryConfig.vue"),
+      },
+      {
+        path: "/mediapublic",
+        name: "宣传发布",
+        component: () => import("../components/pc/MediaPublicView.vue"),
+      },
+      {
+        path: "/busers",
+        name: "商户端用户管理",
+        component: () => import("../components/pc/BUsersView.vue"),
+      },
+      {
+        path: "/hotlineconfig",
+        name: "热线配置",
+        component: () => import("../components/pc/HotlineConfigView.vue"),
       },
     ],
   },
@@ -143,6 +193,21 @@ const router = createRouter({
   routes,
 });
 
+// 统一设备路由映射：在移动端访问PC路径、或在PC端访问移动路径时自动归一
+const MOBILE_ROUTE_MAP = {
+  "/login": "/mlogin",
+  "/games": "/mgames",
+  "/policy": "/mpolicy",
+  "/biview": "/mbi",
+};
+
+const PC_ROUTE_MAP = {
+  "/mlogin": "/login",
+  "/mgames": "/games",
+  "/mpolicy": "/policy",
+  "/mbi": "/biview",
+};
+
 // 设置登录过期时间（一天）86400000
 //let expire = 21600000;
 let expire = 21600000;
@@ -153,44 +218,46 @@ let expire = 21600000;
 router.beforeEach((to, from, next) => {
   let date = new Date().getTime();
   console.info("router.beforeEach", to.path);
-  if (isMobile() && to.path !== "/mtopc") {
-    next("/mtopc");
+  const isMobileDevice = isMobile();
+  if (isMobileDevice && MOBILE_ROUTE_MAP[to.path]) {
+    next(MOBILE_ROUTE_MAP[to.path]);
     return;
   }
-  if (to.path === "/submitaccount") {
-    console.log("submitaccount");
-    next();
+
+  if (!isMobileDevice && PC_ROUTE_MAP[to.path]) {
+    next(PC_ROUTE_MAP[to.path]);
     return;
   }
+  // if (isMobileDevice && to.path !== "/mlogin") {
+  //   next("/mlogin");
+  //   return;
+  // }
+  // if (to.path === "/submitaccount") {
+  //   console.log("submitaccount");
+  //   next();
+  //   return;
+  // }
   //从本地缓存中获取保存的 token 信息
   const tokenObj = JSON.parse(window.localStorage.getItem("isLogin"));
   const username = window.localStorage.getItem("username");
   const userid = window.localStorage.getItem("userid");
   const email = window.localStorage.getItem("email");
   const level = window.localStorage.getItem("level");
+  const department = window.localStorage.getItem("department");
   if (to.path === "/login" || to.path === "/mlogin") {
-    console.log("2");
     next();
   } else {
-    //next();
+    // 如果移动端用户级别为4，则自动跳到 /mtopc
+    if (isMobileDevice && Number(level) === 4 && to.path !== "/mtopc") {
+      next("/mtopc");
+      return;
+    }
     // 如果没有token，强制跳转到登录页面；如果有，则判断token时间是否过期
     if (!tokenObj || !tokenObj.token || !username || !userid) {
-      //next();
-      //next("/login");
-      console.log("3");
-      console.info("isMobile", isMobile());
-      console.log("4");
-      if (isMobile()) {
-        console.log("5");
-        console.info("mlogin", "mlogin");
-        //next("/mlogin");
-        next("/mtopc");
-        console.log("6");
+      if (isMobileDevice) {
+        next("/mlogin");
       } else {
-        console.log("7");
-        console.info("login", "login");
         next("/login");
-        console.log("8");
       }
     } else {
       let date = new Date().getTime();
@@ -203,17 +270,12 @@ router.beforeEach((to, from, next) => {
         window.localStorage.removeItem("userid");
         window.localStorage.removeItem("email");
         window.localStorage.removeItem("level");
-        console.log(window.innerWidth);
-        console.log("9");
-        if (isMobile()) {
-          console.log("10");
-          //next("/mlogin");
-          next("/mtopc");
-          console.log("11");
+        window.localStorage.removeItem("department");
+
+        if (isMobileDevice) {
+          next("/mlogin");
         } else {
-          console.log("12");
           next("/login");
-          console.log("13");
         }
         ElMessage({
           message: h("p", null, [
@@ -222,20 +284,16 @@ router.beforeEach((to, from, next) => {
           ]),
         });
       } else {
-        console.log("1401");
         let objCurUserInfo = {
           username: username,
           userid: userid,
           email: email,
           level: level,
           avation: "",
+          department: department,
         };
-        console.log("1402");
         store.commit("userLogin", objCurUserInfo);
-        console.log("1403");
         next();
-        console.log("1404");
-        console.log("14");
       }
     }
   }

@@ -1,7 +1,7 @@
 <template>
   <div class="login-body">
     <div class="login-panel">
-      <div class="login-title">用户登录</div>
+      <div class="login-title">登录朝阳企业服务平台</div>
       <el-form :model="formData" :rules="rules" ref="formDataRef">
         <el-form-item prop="username">
           <el-input
@@ -132,11 +132,16 @@ const login = () => {
         "level",
         JSON.parse(JSON.stringify(res.retBody.level)),
       );
+      localStorage.setItem(
+        "department",
+        JSON.parse(JSON.stringify(res.retBody.department)),
+      );
       let objCurUserInfo = {
         username: JSON.parse(JSON.stringify(res.retBody.username)),
         userid: JSON.parse(JSON.stringify(res.retBody.userid)),
         email: JSON.parse(JSON.stringify(res.retBody.email)),
         level: JSON.parse(JSON.stringify(res.retBody.level)),
+        department: JSON.parse(JSON.stringify(res.retBody.department)),
         avation: "",
       };
       store.commit("userLogin", objCurUserInfo);

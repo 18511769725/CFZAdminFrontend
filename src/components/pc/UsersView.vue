@@ -132,19 +132,24 @@
           </el-select>
         </el-form-item>
 
-        <!-- <el-form-item label="汇报人" prop="leader">
+        <el-form-item
+          label="所属单位"
+          prop="leader"
+          v-if="state.createUserForm.level === 4"
+          style="width: 310px"
+        >
           <el-select
-            v-model.trim="state.createUserForm.leader"
-            placeholder="请选择汇报人"
+            v-model.trim="state.createUserForm.departmentid"
+            placeholder="请选择单位"
           >
             <el-option
-              v-for="item in state.arrayLeaders"
+              v-for="item in state.arradmindepartments"
               :key="item.id"
-              :label="item.name"
+              :label="item.departmentname"
               :value="item.id"
             />
           </el-select>
-        </el-form-item> -->
+        </el-form-item>
       </div>
     </el-form>
     <template #footer>
@@ -163,8 +168,8 @@ import { ElMessageBox } from "element-plus";
 import { ElMessage } from "element-plus";
 import { Delete, Edit, Plus } from "@element-plus/icons-vue";
 
-import request from '../../utils/request';
-import store from "../../store"
+import request from "../../utils/request";
+import store from "../../store";
 
 import {
   getCurrentDateTime,
@@ -181,6 +186,7 @@ const resetForm = () => {
   state.createUserForm.name = "";
   state.createUserForm.department = "";
   state.createUserForm.level = "";
+  state.createUserForm.departmentid = "";
   state.createUserForm.leader = "";
   state.createUserForm.cellnumber = "";
   state.createUserForm.loginaccount = "";
@@ -197,6 +203,7 @@ const state = reactive({
     id: "",
     name: "",
     department: "",
+    departmentid: "",
     level: "",
     leader: "",
     cellnumber: "",
@@ -208,7 +215,8 @@ const state = reactive({
     email: "",
   },
   showUserInfoDialog: false,
-  boolParamsReady: false
+  boolParamsReady: false,
+  arradmindepartments: [],
 });
 
 const arrayLevels = reactive([
@@ -223,44 +231,48 @@ const arrayLevels = reactive([
   {
     value: 2,
     label: "普通用户",
-  }
+  },
+  {
+    value: 3,
+    label: "纵观全局",
+  },
+  {
+    value: 4,
+    label: "分管用户",
+  },
 ]);
 
 const getUsers = () => {
-  let payload = {
-  };
-  request.post("/getuserlist", payload).then(res => {
+  let payload = {};
+  request.post("/getuserlist", payload).then((res) => {
     if (res) {
       state.userData = res.data;
 
       // 页面加载时默认leader数组用user赋值
       state.arrayLeaders = res.data;
     } else {
-      ElMessage.error('获取用户数据失败！')
+      ElMessage.error("获取用户数据失败！");
     }
   });
 };
 
 // 处理调整用户状态操作
 const handleSwitchUserStatus = (row) => {
-  let tip_text = row.status === 0
-    ? "是否要关停账号?"
-    : "是否要恢复账号?";
+  let tip_text = row.status === 0 ? "是否要关停账号?" : "是否要恢复账号?";
   ElMessageBox.confirm(tip_text)
     .then(() => {
       let payload = {
         id: row.id,
-        status: row.status
+        status: row.status,
       };
-      request.post("/updateuserstatus", payload).then(res => {
+      request.post("/updateuserstatus", payload).then((res) => {
         if (res) {
           getUsers();
           ElMessage("用户信息更新完毕！");
         } else {
-          ElMessage.error('更新用户数据失败！')
+          ElMessage.error("更新用户数据失败！");
         }
       });
-
     })
     .catch(() => {
       // catch error
@@ -271,9 +283,8 @@ const handleSwitchUserStatus = (row) => {
 const onUserTableRowDBClicked = (row, column, event) => {
   state.createUserForm.id = row.id;
   state.createUserForm.name = row.name;
-  state.createUserForm.department = row.department;
   state.createUserForm.level = row.level;
-  state.createUserForm.leader = row.leader;
+  state.createUserForm.departmentid = row.department;
   state.createUserForm.cellnumber = row.cellnumber;
   state.createUserForm.loginaccount = row.loginaccount;
   state.createUserForm.createtime = row.createtime;
@@ -281,6 +292,7 @@ const onUserTableRowDBClicked = (row, column, event) => {
   state.createUserForm.password = row.password;
   state.createUserForm.status = row.status;
   state.createUserForm.email = row.email;
+
   showCreateUserDialog(); // 显示对话框
 };
 
@@ -307,25 +319,36 @@ const checkParams = () => {
   // 检查用户姓名
   if (state.createUserForm.name === "") {
     state.boolParamsReady = false;
-    ElMessageBox.alert('请填写用户姓名！', '保存错误', {confirmButtonText: 'OK',});
+    ElMessageBox.alert("请填写用户姓名！", "保存错误", {
+      confirmButtonText: "OK",
+    });
     return;
   }
   // 检查用户登录账号名称
   if (state.createUserForm.loginaccount === "") {
     state.boolParamsReady = false;
-    ElMessageBox.alert('请填写用户登录账户名称！', '保存错误', {confirmButtonText: 'OK',});
+    ElMessageBox.alert("请填写用户登录账户名称！", "保存错误", {
+      confirmButtonText: "OK",
+    });
     return;
   }
-  // // 检查用户是否选择所在部门
-  // if (state.createUserForm.department === "") {
-  //   state.boolParamsReady = false;
-  //   ElMessageBox.alert('请选择用户所在部门！', '保存错误', {confirmButtonText: 'OK',});
-  //   return;
-  // }
+  // 检查用户所属单位
+  if (
+    state.createUserForm.level === 4 &&
+    state.createUserForm.departmentid === ""
+  ) {
+    state.boolParamsReady = false;
+    ElMessageBox.alert("请选择用户所属单位！", "保存错误", {
+      confirmButtonText: "OK",
+    });
+    return;
+  }
   // 检查用户职级
   if (state.createUserForm.level === "") {
     state.boolParamsReady = false;
-    ElMessageBox.alert('请选择用户职级！', '保存错误', {confirmButtonText: 'OK',});
+    ElMessageBox.alert("请选择用户职级！", "保存错误", {
+      confirmButtonText: "OK",
+    });
     return;
   }
   // // 检查用户汇报人
@@ -338,12 +361,14 @@ const checkParams = () => {
   // 检查用户汇报人
   if (state.createUserForm.email === "") {
     state.boolParamsReady = false;
-    ElMessageBox.alert('请填写电子邮箱！', '保存错误', {confirmButtonText: 'OK',});
+    ElMessageBox.alert("请填写电子邮箱！", "保存错误", {
+      confirmButtonText: "OK",
+    });
     return;
   }
 
   state.boolParamsReady = true;
-}
+};
 const saveCreateUser = () => {
   checkParams(); // 参数检查
   if (!state.boolParamsReady) {
@@ -354,16 +379,15 @@ const saveCreateUser = () => {
     : "是否要创建成员?";
   ElMessageBox.confirm(tip_text)
     .then(() => {
-      request.post("/updateuser", state.createUserForm).then(res => {
+      request.post("/updateuser", state.createUserForm).then((res) => {
         if (res) {
-
           getUsers();
 
           ElMessage("用户信息更新完毕！");
           resetForm();
           state.showUserInfoDialog = false;
         } else {
-          ElMessage.error('更新用户数据失败！')
+          ElMessage.error("更新用户数据失败！");
         }
       });
     })
@@ -377,22 +401,20 @@ const handleResetPassword = (row) => {
   ElMessageBox.confirm(tip_text)
     .then(() => {
       let payload = {
-        username: row.loginaccount
+        username: row.loginaccount,
       };
-      request.post("/user/resetpass", payload).then(res => {
+      request.post("/user/resetpass", payload).then((res) => {
         if (res) {
-          ElMessageBox.alert('密码修改成功', '修改密码', {
-            confirmButtonText: 'OK',
-          })
+          ElMessageBox.alert("密码修改成功", "修改密码", {
+            confirmButtonText: "OK",
+          });
         } else {
-          ElMessage.error('更新用户数据失败！')
+          ElMessage.error("更新用户数据失败！");
         }
       });
     })
-    .catch(() => {
-
-    });
-}
+    .catch(() => {});
+};
 // 渲染表格部门列
 const getDepartmentText = (value) => {
   for (let i = 0; i < store.state.arrayDepartments.length; i++) {
@@ -427,13 +449,24 @@ const getTimeText = (createtime) => {
 
 const handleLevelSelectChange = () => {
   state.arrayLeaders = state.userData.filter(
-    (item) => item.level < createUserForm.level
+    (item) => item.level < createUserForm.level,
   );
+};
+
+const getadmindepartments = () => {
+  request.post("/getadmindepartments", {}).then((res) => {
+    if (res && res.code === "200") {
+      state.arradmindepartments = res.data;
+    } else {
+      ElMessage.error("获取管理部门数据失败！");
+    }
+  });
 };
 
 // 当组件被创建并且DOM已经生成之后,默认加载项目管理子页面
 onMounted(() => {
   getUsers();
+  getadmindepartments();
 });
 </script>
 

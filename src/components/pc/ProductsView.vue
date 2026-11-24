@@ -148,19 +148,34 @@
           placeholder="产品名称"
         />
       </el-form-item>
-      <el-form-item label="供应商名称" prop="bcompanyname" style="width: 95%">
-        <el-select
-          v-model="state.productInfoForm.bcompanyid"
-          placeholder="请选择供应商"
-        >
-          <el-option
-            v-for="item in state.allBCompanies"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+      <div class="line-wrapper" style="width: 95%">
+        <el-form-item label="供应商名称" prop="bcompanyname" style="width: 50%">
+          <el-select
+            v-model="state.productInfoForm.bcompanyid"
+            placeholder="请选择供应商"
+          >
+            <el-option
+              v-for="item in state.allBCompanies"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="联系人" prop="contactname" style="width: 20%">
+          <el-input
+            v-model.trim="state.productInfoForm.contactname"
+            placeholder="联系人"
           />
-        </el-select>
-      </el-form-item>
+        </el-form-item>
+        <el-form-item label="联系方式" prop="phone" style="width: 30%">
+          <el-input
+            v-model.trim="state.productInfoForm.phone"
+            placeholder="联系方式"
+          />
+        </el-form-item>
+      </div>
+
       <div class="line-wrapper" style="width: 95%">
         <el-form-item label="一级品类" prop="categorya" style="width: 90%">
           <el-select
@@ -404,6 +419,39 @@
             </div>
           </el-upload>
         </div>
+
+        <div class="upload-layer upload-layer-bottom">
+          <div class="upload-layer-title">产品视频</div>
+          <el-upload
+            v-model:file-list="state.productInfoForm.videofilelist"
+            :action="store.state.uploadVideoApi"
+            accept="video/*"
+            :limit="1"
+            :on-success="handleUploadVideoOver"
+            :on-error="handleUploadVideoError"
+            :on-remove="handleRemoveVideo"
+            :before-upload="beforeVideoUpload"
+          >
+            <template #file="{ file }">
+              <div class="video-file-item">
+                <el-link
+                  type="primary"
+                  :underline="false"
+                  @click.prevent="handleVideoPreview(file)"
+                >
+                  {{ file.name }}
+                </el-link>
+                <el-button link type="danger" @click="handleRemoveVideo(file)">
+                  删除
+                </el-button>
+              </div>
+            </template>
+            <el-button type="primary">点击上传产品视频</el-button>
+          </el-upload>
+          <div v-if="state.productInfoForm.videourl" class="video-url">
+            已上传视频
+          </div>
+        </div>
       </div>
     </el-form>
 
@@ -427,6 +475,21 @@
       style="width: 100%; height: 100%; object-fit: contain"
       :src="state.curDialogImageUrl"
       alt="Preview Image"
+    />
+  </el-dialog>
+  <el-dialog
+    v-model="state.videoPreviewVisible"
+    title="视频预览"
+    width="70%"
+    :close-on-click-modal="true"
+    @closed="state.videoPreviewUrl = ''"
+  >
+    <video
+      v-if="state.videoPreviewUrl"
+      class="video-preview"
+      :src="state.videoPreviewUrl"
+      controls
+      autoplay
     />
   </el-dialog>
   <!-- 分类信息模态窗口 -->
@@ -619,6 +682,8 @@ const state = reactive({
   },
   dialogViewPicVisible: false,
   curDialogImageUrl: "",
+  videoPreviewVisible: false,
+  videoPreviewUrl: "",
   productInfoForm: {
     id: "",
     producttitle: "",
@@ -637,8 +702,13 @@ const state = reactive({
     imagelistreal: [],
     detailimagelist: [],
     detailimagelistreal: [],
+    videourl: "",
+    videofilelist: [],
     packageprice: [],
     packageid: 0, // 康护产品对应品级
+    contactname: "",
+    phone: "",
+    videourl: "",
   },
   uploadFileForm: {
     fileid: "110",
@@ -832,6 +902,76 @@ const handleUploadDetailFileOver = (res) => {
     state.productInfoForm.detailimagelistreal;
 };
 
+const beforeVideoUpload = (rawFile) => {
+  if (!rawFile.type.startsWith("video/")) {
+    ElMessage.error("请上传视频文件！");
+    return false;
+  }
+  if (rawFile.size / 1024 / 1024 > 100) {
+    ElMessage.error("视频大小不能超过100MB！");
+    return false;
+  }
+  return true;
+};
+
+const getVideoFileName = (videoUrl) => {
+  const urlWithoutQuery = videoUrl.split(/[?#]/)[0];
+  const pathParts = urlWithoutQuery.split("/");
+  return decodeURIComponent(pathParts[pathParts.length - 1]) || "产品视频";
+};
+
+const handleUploadVideoOver = (res, uploadedFile) => {
+  if (res.status === 200) {
+    state.productInfoForm.videourl =
+      res.videourl || res.url || res.imgurl || "";
+    if (!state.productInfoForm.videourl) {
+      ElMessage.error("视频上传成功，但服务端未返回视频地址！");
+      state.productInfoForm.videofilelist = [];
+      return;
+    }
+    uploadedFile.url = state.productInfoForm.videourl;
+    uploadedFile.name = getVideoFileName(state.productInfoForm.videourl);
+    console.log("视频上传成功，返回地址:", state.productInfoForm.videourl);
+  } else {
+    ElMessage.error("视频上传失败！");
+    state.productInfoForm.videofilelist = [];
+  }
+};
+
+const handleVideoPreview = (uploadedFile) => {
+  const videoUrl = uploadedFile?.url || state.productInfoForm.videourl;
+  if (!videoUrl) {
+    ElMessage.error("暂无可播放的视频地址！");
+    return;
+  }
+  state.videoPreviewUrl = videoUrl;
+  state.videoPreviewVisible = true;
+};
+
+const handleUploadVideoError = (error) => {
+  state.productInfoForm.videourl = "";
+  state.productInfoForm.videofilelist = [];
+
+  if (error?.status === 413) {
+    ElMessage.error("视频文件过大，请压缩视频或联系服务端提高上传限制！");
+    return;
+  }
+
+  ElMessage.error("视频上传失败，请稍后重试！");
+};
+
+const handleRemoveVideo = (uploadedFile) => {
+  state.productInfoForm.videourl = "";
+  if (uploadedFile) {
+    state.productInfoForm.videofilelist =
+      state.productInfoForm.videofilelist.filter(
+        (file) => file.uid !== uploadedFile.uid,
+      );
+  } else {
+    state.productInfoForm.videofilelist = [];
+  }
+};
+
 const handlePriceChange = () => {
   state.productInfoForm.price =
     state.productInfoForm.originalprice * state.productInfoForm.pricefactor;
@@ -848,6 +988,8 @@ const onCompanyTableRowDBClicked = (row, column, event) => {
   state.productInfoForm.pricefactor = row.pricefactor;
   state.productInfoForm.details = row.details;
   state.productInfoForm.extrainfo = row.extrainfo;
+  state.productInfoForm.contactname = row.contactname;
+  state.productInfoForm.phone = row.phone;
   if (!row.imagelist) {
     state.productInfoForm.imagelistreal = [];
   } else {
@@ -861,6 +1003,16 @@ const onCompanyTableRowDBClicked = (row, column, event) => {
   }
   state.productInfoForm.detailimagelist =
     state.productInfoForm.detailimagelistreal;
+  state.productInfoForm.videourl = row.videourl || "";
+  state.productInfoForm.videofilelist = state.productInfoForm.videourl
+    ? [
+        {
+          name: getVideoFileName(state.productInfoForm.videourl),
+          url: state.productInfoForm.videourl,
+          uid: `product-video-${row.id}`,
+        },
+      ]
+    : [];
   state.productInfoForm.packageprice = JSON.parse(row.packageprice);
   state.productInfoForm.packageid = row.packageid;
 
@@ -972,6 +1124,8 @@ const createProduct = () => {
 const resetProductForm = () => {
   state.productInfoForm.id = "";
   state.productInfoForm.producttitle = "";
+  state.productInfoForm.contactname = "";
+  state.productInfoForm.phone = "";
   state.productInfoForm.bcompanyid = "";
   state.productInfoForm.categoryaid = "";
   state.productInfoForm.categorybid = "";
@@ -984,6 +1138,10 @@ const resetProductForm = () => {
   state.productInfoForm.imagelistreal = [];
   state.productInfoForm.detailimagelist = [];
   state.productInfoForm.detailimagelistreal = [];
+  state.productInfoForm.videourl = "";
+  state.productInfoForm.videofilelist = [];
+  state.videoPreviewVisible = false;
+  state.videoPreviewUrl = "";
   state.productInfoForm.packageprice = [];
   state.productInfoForm.packageid = 0;
 };
@@ -1262,8 +1420,11 @@ const saveProductInfo = () => {
         pricefactor: state.productInfoForm.pricefactor,
         details: state.productInfoForm.details,
         extrainfo: state.productInfoForm.extrainfo,
+        contactname: state.productInfoForm.contactname,
+        phone: state.productInfoForm.phone,
         imagelist: str_json_imglist,
         detailimagelist: str_json_detailimglist,
+        videourl: state.productInfoForm.videourl,
         packageprice: JSON.stringify(state.productInfoForm.packageprice),
         packageid: state.productInfoForm.packageid,
       };
@@ -1434,6 +1595,22 @@ onMounted(() => {
   font-weight: 600;
   color: #303133;
   margin-bottom: 10px;
+}
+
+.video-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 32px;
+  gap: 12px;
+}
+
+.video-preview {
+  display: block;
+  width: 100%;
+  max-height: 65vh;
+  background-color: #000;
 }
 
 .img-column {
